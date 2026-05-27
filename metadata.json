@@ -1,0 +1,6 @@
+{
+  "name": "Asset Check System",
+  "description": "ระบบตรวจสอบครุภัณฑ์ด้วย QR Code สำหรับหน่วยงาน พร้อมระบบจัดการผู้ใช้งานและรายงาน",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
