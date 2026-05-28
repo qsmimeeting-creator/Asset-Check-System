@@ -1,12 +1,12 @@
 import { ReactNode, useState, useEffect, useRef, MouseEvent as ReactMouseEvent } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Package, QrCode, FileBarChart, Settings, Bell, LogOut, Search, Users as UsersIcon, Menu, X, Database, HardDrive, User, Clock, AlertTriangle, Wrench, Trash2 } from "lucide-react";
-import { cn } from "../lib/utils";
+import { cn, formatThaiDateTime } from "../lib/utils";
 import { isSupabaseConfigured, getNotifications } from "../lib/api";
 import { useAuth } from "../contexts/AuthContext";
 import { AppNotification } from "../types";
-import { format } from "date-fns";
-import { th } from "date-fns/locale";
+// import { format } from "date-fns";
+// import { th } from "date-fns/locale";
 import { motion, AnimatePresence } from "motion/react";
 
 const navigation = [
@@ -321,7 +321,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                                         {n.message}
                                       </p>
                                       <p className="text-[10px] text-slate-400 mt-2 font-medium">
-                                        {format(new Date(n.created_at), 'd MMM yyyy HH:mm', { locale: th })}
+                                        {formatThaiDateTime(n.created_at)}
                                       </p>
                                     </div>
                                     

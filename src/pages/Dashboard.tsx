@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getDashboardStats } from '../lib/api';
 import { DashboardStats } from '../types';
 import { Package, AlertCircle, Wrench, CheckCircle, PieChart as PieChartIcon } from 'lucide-react';
-import { cn } from '../lib/utils';
+import { cn, formatThaiDate } from '../lib/utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 const COLORS = {
@@ -102,12 +102,6 @@ export default function Dashboard() {
               stats.upcomingMaintenance.map((item) => {
                 const mDate = new Date(item.next_maintenance_date);
                 const diffDays = Math.ceil((mDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-                
-                const thaiDate = mDate.toLocaleDateString('th-TH', { 
-                  day: 'numeric', 
-                  month: 'short', 
-                  year: 'numeric' 
-                });
 
                 return (
                   <div key={item.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
@@ -121,7 +115,7 @@ export default function Dashboard() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-slate-900">{thaiDate}</p>
+                      <p className="text-sm font-medium text-slate-900">{formatThaiDate(item.next_maintenance_date)}</p>
                       <p className={cn(
                         "text-xs font-medium mt-0.5",
                         diffDays <= 7 ? "text-primary" : "text-warning"

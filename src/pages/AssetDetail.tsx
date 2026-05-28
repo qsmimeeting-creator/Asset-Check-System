@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getAssetById, getInspections, updateAsset, deleteAsset } from '../lib/api';
 import { Asset, Inspection, AssetStatus } from '../types';
 import { ArrowLeft, Box, MapPin, User, Calendar, DollarSign, Activity, Printer, Edit, Trash2 } from 'lucide-react';
-import { formatCurrency, cn } from '../lib/utils';
+import { formatCurrency, cn, formatThaiDateTime, formatThaiDate } from '../lib/utils';
 import { format } from 'date-fns';
 import { QRCodeSVG } from 'qrcode.react';
 import AssetFormModal from '../components/AssetFormModal';
@@ -220,7 +220,7 @@ export default function AssetDetail() {
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-slate-500 flex items-center"><Calendar className="w-4 h-4 mr-2" /> วันที่ได้มา</dt>
-                  <dd className="mt-1 text-sm text-slate-900">{asset.purchase_date}</dd>
+                  <dd className="mt-1 text-sm text-slate-900">{formatThaiDate(asset.purchase_date)}</dd>
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-slate-500 flex items-center"><DollarSign className="w-4 h-4 mr-2" /> ราคา</dt>
@@ -257,7 +257,7 @@ export default function AssetDetail() {
                           <div className="text-sm text-slate-500 mt-1 flex items-center">
                             <span>โดย {insp.checked_by}</span>
                             <span className="mx-2">•</span>
-                            <span>{insp.checked_at}</span>
+                            <span>{formatThaiDateTime(insp.checked_at)}</span>
                           </div>
                         </div>
                         <span className={cn("inline-flex items-center rounded-md px-2 py-1 text-xs font-medium", statusStyles[insp.status])}>

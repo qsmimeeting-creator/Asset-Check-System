@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import { getUsers, createUser, deleteUser, updateUser, getDepartments, getRoles } from '../lib/api';
 import { User, Department, Role } from '../types';
 import { UserPlus, Trash2, Shield, Mail, Building, Edit, X } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '../lib/utils';
+import { formatCurrency, cn, formatThaiDate } from '../lib/utils';
+// import { format } from 'date-fns'; // removed format since we'll use formatThaiDate
 import { useForm } from 'react-hook-form';
 import NotificationModal from '../components/NotificationModal';
 import ConfirmModal from '../components/ConfirmModal';
@@ -233,7 +233,7 @@ export default function Users() {
                       </span>
                     </td>
                     <td className="whitespace-nowrap px-3 py-4 text-sm text-slate-500 hidden lg:table-cell">
-                      {format(new Date(user.created_at), 'dd/MM/yyyy')}
+                      {formatThaiDate(user.created_at)}
                     </td>
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                       <div className="flex justify-end space-x-2">

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { getAssets, getDepartments } from '../lib/api';
 import { FileText, Download, Printer, Filter, Calendar, Search, ChevronDown, Package, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
-import { th } from 'date-fns/locale';
+import { formatCurrency, cn, formatThaiDate } from '../lib/utils';
 import * as XLSX from 'xlsx';
 import { Asset, Department } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
@@ -98,7 +98,7 @@ export default function Reports() {
         'ยี่ห้อ/รุ่น': `${a.brand || '-'} ${a.model || ''}`.trim() || '-',
         'สถานที่ตั้ง': a.location_id,
         'สถานะปัจจุบัน': statusLabels[a.status]?.label || a.status,
-        'วันที่ได้มา': a.purchase_date ? format(new Date(a.purchase_date), 'dd/MM/yyyy') : '-'
+        'วันที่ได้มา': a.purchase_date ? formatThaiDate(a.purchase_date) : '-'
       }));
 
       const ws = XLSX.utils.json_to_sheet(data);
@@ -294,7 +294,7 @@ export default function Reports() {
                         </span>
                       </td>
                       <td className="py-3 px-4 border border-slate-200 text-center font-medium">
-                        {asset.purchase_date ? format(new Date(asset.purchase_date), 'dd/MM/yyyy') : '-'}
+                        {asset.purchase_date ? formatThaiDate(asset.purchase_date) : '-'}
                       </td>
                     </tr>
                   ))

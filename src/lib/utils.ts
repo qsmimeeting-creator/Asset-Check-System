@@ -15,3 +15,26 @@ export function formatCurrency(amount: number) {
 export function generateAssetId() {
   return Math.random().toString(36).substring(2, 9);
 }
+
+export function formatThaiDateTime(dateString: string | Date) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("th-TH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  }).format(date);
+}
+
+export function formatThaiDate(dateString: string | Date) {
+  if (!dateString) return "";
+  const date = new Date(dateString);
+  return new Intl.DateTimeFormat("th-TH", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
