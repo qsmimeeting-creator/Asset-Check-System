@@ -39,7 +39,7 @@ export default function Login() {
           <div className="h-16 w-16 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 mb-4 transition-transform hover:scale-105 active:scale-95 cursor-pointer">
             <Package className="h-10 w-10 text-white" />
           </div>
-          <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight">ระบบจัดการครุภัณฑ์</h1>
+          <h1 className="text-3xl font-display font-bold text-slate-900 tracking-tight">ระบบบริหารจัดการครุภัณฑ์</h1>
           <p className="text-slate-500 mt-2">กรุณาเข้าสู่ระบบเพื่อใช้งาน</p>
         </div>
 
@@ -127,7 +127,7 @@ export default function Login() {
 
         {/* Footer */}
         <p className="text-center text-slate-400 text-sm mt-8">
-          &copy; 2024 ระบบจัดการครุภัณฑ์. All rights reserved.
+          &copy; 2026 ระบบบริหารจัดการครุภัณฑ์. All rights reserved.
         </p>
       </div>
     </div>

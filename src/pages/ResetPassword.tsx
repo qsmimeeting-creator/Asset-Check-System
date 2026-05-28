@@ -46,7 +46,7 @@ export default function ResetPassword() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { error } = await supabase!.auth.updateUser({
         password: password,
       });
 
@@ -55,7 +55,7 @@ export default function ResetPassword() {
       
       // Auto logout and redirect after success
       setTimeout(() => {
-        supabase.auth.signOut();
+        supabase!.auth.signOut();
         navigate('/login');
       }, 3000);
     } catch (err: any) {

@@ -176,8 +176,8 @@ export default function Reports() {
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden print:hidden"
           >
-            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="space-y-1.5">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6 flex flex-wrap gap-x-6 gap-y-4">
+              <div className="flex-1 min-w-[240px] space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">ค้นหา</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -190,7 +190,7 @@ export default function Reports() {
                   />
                 </div>
               </div>
-              <div className="space-y-1.5">
+              <div className="w-full sm:w-[180px] space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">สถานะ</label>
                 <select
                   className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:ring-2 focus:ring-primary outline-none transition-all appearance-none"
@@ -204,7 +204,7 @@ export default function Reports() {
                 </select>
               </div>
               {user?.role !== 'User' && (
-                <div className="space-y-1.5">
+                <div className="w-full sm:w-[200px] space-y-1.5">
                   <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">แผนก</label>
                   <select
                     className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:ring-2 focus:ring-primary outline-none transition-all appearance-none"
@@ -218,19 +218,19 @@ export default function Reports() {
                   </select>
                 </div>
               )}
-              <div className="space-y-1.5">
+              <div className="w-full md:w-auto space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">ช่วงวันที่ซื้อ</label>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
                   <input
                     type="date"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm outline-none"
+                    className="w-full sm:w-[145px] px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm outline-none"
                     value={startDate}
                     onChange={(e) => setStartDate(e.target.value)}
                   />
-                  <span className="text-slate-400">-</span>
+                  <span className="text-slate-400 hidden sm:inline">-</span>
                   <input
                     type="date"
-                    className="w-full px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm outline-none"
+                    className="w-full sm:w-[145px] px-3 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm outline-none"
                     value={endDate}
                     onChange={(e) => setEndDate(e.target.value)}
                   />

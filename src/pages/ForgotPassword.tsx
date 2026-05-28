@@ -21,11 +21,28 @@ export default function ForgotPassword() {
     setError(null);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      // 1. ตรวจสอบว่ามีอีเมลนี้ในระบบหรือไม่
+      const { data: userExists, error: checkError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('email', email)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (!userExists) {
+        setError('ไม่พบอีเมลนี้ในระบบงานครุภัณฑ์');
+        setLoading(false);
+        return;
+      }
+
+      // 2. หากพบ จึงส่งคำสั่ง reset ไปยัง Supabase Auth
+      const { error } = await supabase!.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
       if (error) throw error;
+      
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || 'เกิดข้อผิดพลาดในการส่งคำขอ');

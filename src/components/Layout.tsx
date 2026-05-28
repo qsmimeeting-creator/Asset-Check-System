@@ -103,8 +103,11 @@ export default function Layout({ children }: { children: ReactNode }) {
       )}>
         <div className="flex h-16 items-center justify-between px-6 bg-white border-b border-slate-100">
           <div className="flex items-center">
-            <Package className="h-8 w-8 text-primary mr-3" />
-            <span className="text-slate-900 font-display font-bold text-xl tracking-tight">ระบบครุภัณฑ์</span>
+            <Package className="h-8 w-8 text-primary flex-shrink-0 mr-3" />
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] leading-none mb-1">ระบบบริหารจัดการ</span>
+              <span className="text-slate-900 font-display font-bold text-lg leading-none tracking-tight">ครุภัณฑ์</span>
+            </div>
           </div>
           <button onClick={() => setMobileMenuOpen(false)} className="text-slate-400 hover:text-slate-600">
             <X className="h-6 w-6" />
@@ -155,8 +158,11 @@ export default function Layout({ children }: { children: ReactNode }) {
       {/* Sidebar Desktop */}
       <div className="hidden md:flex w-64 flex-col fixed inset-y-0 bg-white border-r border-slate-200">
         <div className="flex h-16 items-center flex-shrink-0 px-6 bg-white border-b border-slate-100">
-          <Package className="h-8 w-8 text-primary mr-3" />
-          <span className="text-slate-900 font-display font-bold text-xl tracking-tight">ระบบครุภัณฑ์</span>
+          <Package className="h-8 w-8 text-primary flex-shrink-0 mr-3" />
+          <div className="flex flex-col">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.15em] leading-none mb-1">ระบบบริหารจัดการ</span>
+            <span className="text-slate-900 font-display font-bold text-lg leading-none tracking-tight">ครุภัณฑ์</span>
+          </div>
         </div>
         <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
           <nav className="mt-2 flex-1 space-y-1 px-4">
