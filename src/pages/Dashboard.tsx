@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react';
 import { getDashboardStats } from '../lib/api';
 import { DashboardStats } from '../types';
 import { Package, AlertCircle, Wrench, CheckCircle, PieChart as PieChartIcon } from 'lucide-react';
+import { cn } from '../lib/utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 
 const COLORS = {
-  active: '#10b981', // emerald-500
-  damaged: '#f43f5e', // rose-500
-  repair: '#f59e0b', // amber-500
-  lost: '#64748b', // slate-500
-  disposed: '#cbd5e1' // slate-300
+  active: '#198754', // success
+  damaged: '#6C757D', // medical-gray
+  repair: '#FFC107', // warning
+  lost: '#ADB5BD', // inactive
+  disposed: '#DEE2E6' // medical-border
 };
 
 export default function Dashboard() {
@@ -43,10 +44,10 @@ export default function Dashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="ครุภัณฑ์ทั้งหมด" value={stats.total} icon={Package} color="bg-indigo-50 text-indigo-600" />
-        <StatCard title="สถานะปกติ" value={stats.active} icon={CheckCircle} color="bg-emerald-50 text-emerald-600" />
-        <StatCard title="ต้องการการซ่อมแซม" value={stats.repair + stats.damaged} icon={Wrench} color="bg-amber-50 text-amber-600" />
-        <StatCard title="สูญหาย / ไม่พบ" value={stats.lost} icon={AlertCircle} color="bg-rose-50 text-rose-600" />
+        <StatCard title="ครุภัณฑ์ทั้งหมด" value={stats.total} icon={Package} color="bg-primary/10 text-primary" />
+        <StatCard title="สถานะปกติ" value={stats.active} icon={CheckCircle} color="bg-success/10 text-[#198754]" />
+        <StatCard title="ต้องการการซ่อมแซม" value={stats.repair + stats.damaged} icon={Wrench} color="bg-warning/10 text-warning" />
+        <StatCard title="สูญหาย / ไม่พบ" value={stats.lost} icon={AlertCircle} color="bg-inactive/10 text-inactive" />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -94,30 +95,51 @@ export default function Dashboard() {
               <Wrench className="w-5 h-5 text-slate-400" />
               <h2 className="text-lg font-semibold text-slate-900">กำหนดซ่อมบำรุงที่กำลังจะถึง</h2>
             </div>
-            <a href="#" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">ดูทั้งหมด</a>
+            <a href="/assets" className="text-sm font-medium text-trust-blue hover:underline">ดูทั้งหมด</a>
           </div>
           <div className="space-y-4">
-            {[
-              { name: 'เครื่องปรับอากาศ (ห้อง 303)', code: '7440-001-0012', date: '30 พ.ค. 2569', diff: 'ใน 3 วัน' },
-              { name: 'เครื่องสำรองไฟ (ห้อง Server)', code: '7440-001-0045', date: '5 มิ.ย. 2569', diff: 'ใน 9 วัน' },
-              { name: 'รถยนต์ส่วนกลาง (เลขทะเบียน 1กข-1234)', code: '7440-001-0089', date: '12 มิ.ย. 2569', diff: 'ใน 16 วัน' }
-            ].map((item, i) => (
-              <div key={i} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
-                <div className="flex items-center space-x-4">
-                  <div className="bg-indigo-100 rounded-lg p-2.5">
-                    <Package className="w-5 h-5 text-indigo-600" />
+            {stats.upcomingMaintenance.length > 0 ? (
+              stats.upcomingMaintenance.map((item) => {
+                const mDate = new Date(item.next_maintenance_date);
+                const diffDays = Math.ceil((mDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                
+                const thaiDate = mDate.toLocaleDateString('th-TH', { 
+                  day: 'numeric', 
+                  month: 'short', 
+                  year: 'numeric' 
+                });
+
+                return (
+                  <div key={item.id} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
+                    <div className="flex items-center space-x-4">
+                      <div className="bg-primary/5 rounded-lg p-2.5">
+                        <Package className="w-5 h-5 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-semibold text-slate-900">{item.name}</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">รหัส: {item.asset_code}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-slate-900">{thaiDate}</p>
+                      <p className={cn(
+                        "text-xs font-medium mt-0.5",
+                        diffDays <= 7 ? "text-primary" : "text-warning"
+                      )}>
+                        ใน {diffDays} วัน
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="text-sm font-semibold text-slate-900">{item.name}</h3>
-                    <p className="text-xs text-slate-500 mt-0.5">รหัส: {item.code}</p>
-                  </div>
+                );
+              })
+            ) : (
+              <div className="py-12 text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 mb-3">
+                  <CheckCircle className="w-6 h-6 text-slate-400" />
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium text-slate-900">{item.date}</p>
-                  <p className="text-xs text-amber-600 font-medium mt-0.5">{item.diff}</p>
-                </div>
+                <p className="text-sm text-slate-500">ไม่มีกำหนดการซ่อมบำรุงใน 30 วันข้างหน้า</p>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

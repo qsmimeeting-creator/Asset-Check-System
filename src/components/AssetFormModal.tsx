@@ -1,7 +1,8 @@
 import { useForm } from 'react-hook-form';
-import { Asset, AssetStatus } from '../types';
+import { Asset, AssetStatus, Department } from '../types';
 import { X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { getDepartments } from '../lib/api';
 
 type FormData = Omit<Asset, 'id'>;
 
@@ -15,6 +16,11 @@ interface AssetFormModalProps {
 
 export default function AssetFormModal({ isOpen, onClose, onSubmit, initialData, title }: AssetFormModalProps) {
   const { register, handleSubmit, reset } = useForm<FormData>();
+  const [departments, setDepartments] = useState<Department[]>([]);
+
+  useEffect(() => {
+    getDepartments().then(setDepartments);
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -56,7 +62,7 @@ export default function AssetFormModal({ isOpen, onClose, onSubmit, initialData,
               <label className="text-sm font-medium text-slate-700">รหัสครุภัณฑ์</label>
               <input
                 {...register('asset_code', { required: true })}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
                 placeholder="เช่น 7440-001-0001"
               />
             </div>
@@ -64,7 +70,7 @@ export default function AssetFormModal({ isOpen, onClose, onSubmit, initialData,
               <label className="text-sm font-medium text-slate-700">ชื่อรายการ</label>
               <input
                 {...register('name', { required: true })}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
                 placeholder="ชื่อครุภัณฑ์"
               />
             </div>
@@ -72,7 +78,7 @@ export default function AssetFormModal({ isOpen, onClose, onSubmit, initialData,
               <label className="text-sm font-medium text-slate-700">หมวดหมู่</label>
               <input
                 {...register('category_id', { required: true })}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
                 placeholder="คอมพิวเตอร์, เฟอร์นิเจอร์..."
               />
             </div>
@@ -80,21 +86,21 @@ export default function AssetFormModal({ isOpen, onClose, onSubmit, initialData,
               <label className="text-sm font-medium text-slate-700">หมายเลขซีเรียล (S/N)</label>
               <input
                 {...register('serial_number')}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-700">ยี่ห้อ</label>
               <input
                 {...register('brand')}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-700">รุ่น</label>
               <input
                 {...register('model')}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="space-y-1">
@@ -102,7 +108,7 @@ export default function AssetFormModal({ isOpen, onClose, onSubmit, initialData,
               <input
                 type="number"
                 {...register('price', { valueAsNumber: true })}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="space-y-1">
@@ -110,35 +116,40 @@ export default function AssetFormModal({ isOpen, onClose, onSubmit, initialData,
               <input
                 type="date"
                 {...register('purchase_date')}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-700">สถานที่ตั้ง</label>
               <input
                 {...register('location_id')}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-700">ฝ่าย / แผนก</label>
-              <input
+              <select
                 {...register('department_id')}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
-              />
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary bg-white"
+              >
+                <option value="">เลือกส่วนงาน / แผนก</option>
+                {departments.map((dept) => (
+                  <option key={dept.id} value={dept.name}>{dept.name}</option>
+                ))}
+              </select>
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-700">ผู้รับผิดชอบ</label>
               <input
                 {...register('responsible_person')}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
             <div className="space-y-1">
               <label className="text-sm font-medium text-slate-700">สถานะ</label>
               <select
                 {...register('status')}
-                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-indigo-500 bg-white"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-primary bg-white"
               >
                 <option value="active">ปกติ</option>
                 <option value="damaged">ชำรุด</option>
@@ -160,7 +171,7 @@ export default function AssetFormModal({ isOpen, onClose, onSubmit, initialData,
             </button>
             <button
               type="submit"
-              className="px-6 py-2.5 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm transition-colors"
+              className="px-6 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-xl shadow-sm transition-colors"
             >
               บันทึกข้อมูล
             </button>

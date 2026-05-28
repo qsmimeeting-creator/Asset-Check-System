@@ -1,6 +1,4 @@
 export type AssetStatus = 'active' | 'damaged' | 'repair' | 'lost' | 'moved' | 'disposed';
-export type UserRole = 'Super Admin' | 'Admin' | 'Inspector' | 'Viewer';
-
 export interface Asset {
   id: string;
   asset_code: string;
@@ -17,6 +15,7 @@ export interface Asset {
   status: AssetStatus;
   next_maintenance_date: string;
   image_url?: string;
+  created_at?: string;
 }
 
 export interface Inspection {
@@ -29,13 +28,26 @@ export interface Inspection {
   note: string;
 }
 
+export interface Role {
+  id: string;
+  name: string;
+  created_at?: string;
+}
+
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: UserRole;
+  role: string;
   department?: string;
+  password?: string;
   created_at: string;
+}
+
+export interface Department {
+  id: string;
+  name: string;
+  created_at?: string;
 }
 
 export interface DashboardStats {
@@ -45,4 +57,15 @@ export interface DashboardStats {
   repair: number;
   lost: number;
   disposed: number;
+  upcomingMaintenance: Asset[];
+}
+
+export interface AppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'maintenance' | 'status' | 'system';
+  created_at: string;
+  is_read: boolean;
+  related_id?: string;
 }

@@ -31,7 +31,7 @@ export const mockAssets: Asset[] = [
     department_id: 'ฝ่ายบริหารงานทั่วไป',
     responsible_person: 'นางสาวมาลี สุขสบาย',
     status: 'damaged',
-    next_maintenance_date: '2026-05-10'
+    next_maintenance_date: '2026-06-10'
   },
   {
     id: 'asset_003',
@@ -63,7 +63,7 @@ export const mockAssets: Asset[] = [
     department_id: 'ฝ่ายสารสนเทศ',
     responsible_person: 'นายวิชัย รักดี',
     status: 'repair',
-    next_maintenance_date: '2026-11-05'
+    next_maintenance_date: '2026-06-25'
   },
   {
     id: 'asset_005',
@@ -88,6 +88,7 @@ export const mockUsers: User[] = [
     id: 'user_001',
     name: 'แอดมิน สูงสุด',
     email: 'admin@company.com',
+    password: 'password123',
     role: 'Super Admin',
     department: 'ฝ่ายสารสนเทศ',
     created_at: '2024-01-01T00:00:00Z'
@@ -96,6 +97,7 @@ export const mockUsers: User[] = [
     id: 'user_002',
     name: 'นายสมชาย ใจดี',
     email: 'somchai@company.com',
+    password: 'password123',
     role: 'Admin',
     department: 'ฝ่ายบริหารงานทั่วไป',
     created_at: '2024-02-15T09:00:00Z'
@@ -104,6 +106,7 @@ export const mockUsers: User[] = [
     id: 'user_003',
     name: 'นางสาวมาลี สุขสบาย',
     email: 'malee@company.com',
+    password: 'password123',
     role: 'Inspector',
     department: 'ฝ่ายบริหารงานทั่วไป',
     created_at: '2024-03-20T10:30:00Z'
@@ -112,6 +115,7 @@ export const mockUsers: User[] = [
     id: 'user_004',
     name: 'นายวิชัย รักดี',
     email: 'wichai@company.com',
+    password: 'password123',
     role: 'Viewer',
     department: 'ฝ่ายสารสนเทศ',
     created_at: '2024-04-10T14:00:00Z'

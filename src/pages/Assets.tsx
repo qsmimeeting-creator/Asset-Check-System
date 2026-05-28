@@ -1,19 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, ChangeEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { getAssets, createAsset, deleteAsset } from '../lib/api';
 import { Asset, AssetStatus } from '../types';
-import { Plus, Search, Filter, Trash2, QrCode } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, QrCode, Upload, Download, FileSpreadsheet } from 'lucide-react';
 import { formatCurrency, cn } from '../lib/utils';
 import AssetFormModal from '../components/AssetFormModal';
 import NotificationModal from '../components/NotificationModal';
+import ConfirmModal from '../components/ConfirmModal';
+import * as XLSX from 'xlsx';
 
 const statusStyles: Record<AssetStatus, string> = {
-  active: 'bg-emerald-100 text-emerald-800',
-  damaged: 'bg-rose-100 text-rose-800',
-  repair: 'bg-amber-100 text-amber-800',
-  lost: 'bg-slate-100 text-slate-800',
-  moved: 'bg-blue-100 text-blue-800',
-  disposed: 'bg-gray-100 text-gray-800',
+  active: 'bg-success/10 text-success-hex',
+  damaged: 'bg-medical-gray/10 text-medical-gray',
+  repair: 'bg-warning/10 text-warning',
+  lost: 'bg-inactive/10 text-inactive',
+  moved: 'bg-trust-blue/10 text-trust-blue',
+  disposed: 'bg-inactive/10 text-inactive',
 };
 
 const statusLabels: Record<AssetStatus, string> = {
@@ -30,8 +32,12 @@ export default function Assets() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [notification, setNotification] = useState<{isOpen: boolean, title: string, message: string, type: 'success' | 'error' | 'info'}>({
     isOpen: false, title: '', message: '', type: 'info'
+  });
+  const [confirmModal, setConfirmModal] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void, type: 'danger' | 'warning' | 'info'}>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}, type: 'warning'
   });
 
   const fetchAssets = () => {
@@ -67,26 +73,125 @@ export default function Assets() {
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ ${name}?`)) {
+  const handleDelete = (id: string, name: string) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'ลบครุภัณฑ์',
+      message: `คุณแน่ใจหรือไม่ว่าต้องการลบ ${name}? การกระทำนี้ไม่สามารถย้อนกลับได้`,
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteAsset(id);
+          setNotification({
+            isOpen: true,
+            title: 'ลบสำเร็จ',
+            message: 'ลบข้อมูลครุภัณฑ์ออกจากระบบแล้ว',
+            type: 'success'
+          });
+          fetchAssets();
+        } catch (e) {
+          setNotification({
+            isOpen: true,
+            title: 'ความผิดพลาด',
+            message: 'ไม่สามารถลบข้อมูลได้',
+            type: 'error'
+          });
+        }
+      }
+    });
+  };
+
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      {
+        'รหัสครุภัณฑ์': 'ASSET-001',
+        'ชื่อครุภัณฑ์': 'เครื่องคอมพิวเตอร์ Desktop',
+        'หมวดหมู่/ประเภท': 'IT Equipment',
+        'ยี่ห้อ': 'Dell',
+        'รุ่น': 'OptiPlex 7000',
+        'ซีเรียลนัมเบอร์': 'SN-12345678',
+        'วันที่สั่งซื้อ (YYYY-MM-DD)': '2023-01-15',
+        'ราคา': 25000,
+        'สถานที่ตั้ง': 'ห้องปฏิบัติการ 1',
+        'หน่วยงาน/แผนก': 'ฝ่ายเทคโนโลยีสารสนเทศ',
+        'ผู้รับผิดชอบ': 'นายสมชาย ใจดี',
+        'วันซ่อมบำรุงครั้งถัดไป (YYYY-MM-DD)': '2024-01-15'
+      }
+    ];
+
+    const ws = XLSX.utils.json_to_sheet(templateData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'Asset_Import_Template.xlsx');
+  };
+
+  const handleImportExcel = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
       try {
-        await deleteAsset(id);
+        const data = event.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json(sheet) as any[];
+
+        if (jsonData.length === 0) {
+          throw new Error('ไม่พบข้อมูลในไฟล์ Excel');
+        }
+
+        setLoading(true);
+        let successCount = 0;
+        let failCount = 0;
+
+        for (const row of jsonData) {
+          try {
+            const assetData: Omit<Asset, 'id'> = {
+              asset_code: String(row['รหัสครุภัณฑ์'] || ''),
+              name: String(row['ชื่อครุภัณฑ์'] || 'ไม่มีชื่อ'),
+              category_id: String(row['หมวดหมู่/ประเภท'] || '-'),
+              brand: String(row['ยี่ห้อ'] || ''),
+              model: String(row['รุ่น'] || ''),
+              serial_number: String(row['ซีเรียลนัมเบอร์'] || ''),
+              purchase_date: row['วันที่สั่งซื้อ (YYYY-MM-DD)'] ? String(row['วันที่สั่งซื้อ (YYYY-MM-DD)']) : new Date().toISOString().split('T')[0],
+              price: Number(row['ราคา']) || 0,
+              location_id: String(row['สถานที่ตั้ง'] || '-'),
+              department_id: String(row['หน่วยงาน/แผนก'] || '-'),
+              responsible_person: String(row['ผู้รับผิดชอบ'] || ''),
+              status: 'active',
+              next_maintenance_date: String(row['วันซ่อมบำรุงครั้งถัดไป (YYYY-MM-DD)'] || '')
+            };
+            
+            await createAsset(assetData);
+            successCount++;
+          } catch (err) {
+            console.error('Import row failed:', err);
+            failCount++;
+          }
+        }
+
         setNotification({
           isOpen: true,
-          title: 'ลบสำเร็จ',
-          message: 'ลบข้อมูลครุภัณฑ์ออกจากระบบแล้ว',
-          type: 'success'
+          title: 'นำเข้าข้อมูลสำเร็จ',
+          message: `นำเข้าข้อมูลสำเร็จ ${successCount} รายการ ${failCount > 0 ? `(ล้มเหลว ${failCount} รายการ)` : ''}`,
+          type: failCount > 0 ? 'info' : 'success'
         });
         fetchAssets();
-      } catch (e) {
+      } catch (err: any) {
         setNotification({
           isOpen: true,
-          title: 'ความผิดพลาด',
-          message: 'ไม่สามารถลบข้อมูลได้',
+          title: 'ความผิดพลาดในการนำเข้า',
+          message: err.message || 'เกิดข้อผิดพลาดในการอ่านไฟล์',
           type: 'error'
         });
+      } finally {
+        setLoading(false);
+        if (fileInputRef.current) fileInputRef.current.value = '';
       }
-    }
+    };
+    reader.readAsBinaryString(file);
   };
 
   const filtered = assets.filter(a => 
@@ -101,7 +206,30 @@ export default function Assets() {
           <h1 className="text-2xl font-display font-bold text-slate-900 tracking-tight">คลังครุภัณฑ์</h1>
           <p className="mt-1 text-sm text-slate-500">จัดการ ติดตาม และอัปเดตข้อมูลครุภัณฑ์ทั้งหมดในระบบ</p>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none space-x-3">
+        <div className="mt-4 sm:mt-0 sm:ml-16 flex flex-wrap gap-3">
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleImportExcel} 
+            accept=".xlsx, .xls" 
+            className="hidden" 
+          />
+          <button
+            type="button"
+            onClick={handleDownloadTemplate}
+            className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            ดาวน์โหลดตัวอย่าง
+          </button>
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
+          >
+            <Upload className="w-4 h-4 mr-2" />
+            นำเข้า Excel
+          </button>
           <Link
             to="/scan"
             className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
@@ -112,7 +240,7 @@ export default function Assets() {
           <button
             type="button"
             onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             <Plus className="w-4 h-4 mr-2" />
             เพิ่มครุภัณฑ์
@@ -128,7 +256,7 @@ export default function Assets() {
           </div>
           <input
             type="text"
-            className="block w-full rounded-xl border-0 py-2.5 pl-10 pr-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 transition-shadow"
+            className="block w-full rounded-xl border-0 py-2.5 pl-10 pr-3 text-slate-900 ring-1 ring-inset ring-slate-300 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-primary sm:text-sm sm:leading-6 transition-shadow"
             placeholder="ค้นหาด้วยรหัสหรือชื่อ..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -168,7 +296,7 @@ export default function Assets() {
                           {asset.category_id ? asset.category_id.charAt(0) : 'A'}
                         </div>
                         <div className="ml-4">
-                          <Link to={`/assets/${asset.id}`} className="font-medium text-slate-900 hover:text-indigo-600 transition-colors">
+                          <Link to={`/assets/${asset.id}`} className="font-medium text-slate-900 hover:text-primary transition-colors">
                             {asset.name}
                           </Link>
                           <div className="text-slate-500 font-mono text-xs mt-0.5">{asset.asset_code}</div>
@@ -186,7 +314,7 @@ export default function Assets() {
                     </td>
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
                       <div className="flex justify-end space-x-2">
-                        <Link to={`/assets/${asset.id}`} className="text-indigo-600 hover:text-indigo-900 px-2 py-1 bg-indigo-50 rounded-lg transition-colors">
+                        <Link to={`/assets/${asset.id}`} className="text-trust-blue hover:underline px-2 py-1 bg-trust-blue/5 rounded-lg transition-colors">
                           รายละเอียด
                         </Link>
                         <button 
@@ -218,6 +346,15 @@ export default function Assets() {
         title={notification.title}
         message={notification.message}
         type={notification.type}
+      />
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({...prev, isOpen: false}))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
       />
     </div>
   );

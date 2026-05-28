@@ -31,23 +31,45 @@ export default function ScanQR() {
       return;
     }
 
-    if (!scannerRef.current) {
-      const scanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        false
-      );
-      
-      scanner.render((text) => handleScan(text), (err) => {
-        // Ignored, happens constantly while scanning
-      });
-      
-      scannerRef.current = scanner;
-    }
+    let isMounted = true;
+
+    const initScanner = async () => {
+      // Ensure we clean up any pre-existing content in the div before starting
+      const readerElement = document.getElementById("reader");
+      if (readerElement) {
+        readerElement.innerHTML = "";
+      }
+
+      if (!scannerRef.current && isMounted) {
+        const scanner = new Html5QrcodeScanner(
+          "reader",
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          /* verbose= */ false
+        );
+        
+        scanner.render(
+          (text) => {
+            if (isMounted) handleScan(text);
+          }, 
+          (err) => {
+            // Ignored, happens constantly while scanning
+          }
+        );
+        
+        scannerRef.current = scanner;
+      }
+    };
+
+    // Small delay to ensure DOM is ready and any previous cleanup finished
+    const timer = setTimeout(initScanner, 100);
     
     return () => {
+      isMounted = false;
+      clearTimeout(timer);
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(console.error);
+        scannerRef.current.clear().catch(err => {
+          console.error("Failed to clear scanner:", err);
+        });
         scannerRef.current = null;
       }
     };
@@ -55,7 +77,11 @@ export default function ScanQR() {
 
   const handleScan = async (decodedText: string) => {
     if (scannerRef.current) {
-      scannerRef.current.clear().catch(console.error);
+      try {
+        await scannerRef.current.clear();
+      } catch (err) {
+        console.error("Failed to clear scanner on scan:", err);
+      }
       scannerRef.current = null;
     }
     setScanResult(decodedText);
@@ -71,10 +97,10 @@ export default function ScanQR() {
           note: ''
         });
       } else {
-        setError(`No asset found with code: ${decodedText}`);
+        setError(`ไม่พบครุภัณฑ์ที่ตรงกับรหัส: ${decodedText}`);
       }
     } catch (err: any) {
-      setError(err.message || 'Error occurred while fetching asset');
+      setError(err.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลครุภัณฑ์');
     }
   };
 
@@ -84,7 +110,7 @@ export default function ScanQR() {
     try {
       await addInspection({
         asset_id: asset.id,
-        checked_by: "Current User", // In real app, from auth state
+        checked_by: "ผู้ดูแลระบบ", // In real app, from auth state
         checked_at: new Date().toISOString(),
         status: data.status,
         location_id: data.location_id,
@@ -101,13 +127,22 @@ export default function ScanQR() {
     setScanResult(null);
     setAsset(null);
     setError('');
-    const scanner = new Html5QrcodeScanner(
-      "reader",
-      { fps: 10, qrbox: { width: 250, height: 250 } },
-      false
-    );
-    scanner.render((text) => handleScan(text), () => {});
-    scannerRef.current = scanner;
+    
+    // Small delay to ensure the "reader" div is back in the DOM
+    setTimeout(() => {
+      const readerElement = document.getElementById("reader");
+      if (readerElement) {
+        readerElement.innerHTML = "";
+      }
+
+      const scanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        false
+      );
+      scanner.render((text) => handleScan(text), () => {});
+      scannerRef.current = scanner;
+    }, 100);
   };
 
   return (

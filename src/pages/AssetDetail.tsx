@@ -8,14 +8,15 @@ import { format } from 'date-fns';
 import { QRCodeSVG } from 'qrcode.react';
 import AssetFormModal from '../components/AssetFormModal';
 import NotificationModal from '../components/NotificationModal';
+import ConfirmModal from '../components/ConfirmModal';
 
 const statusStyles: Record<AssetStatus, string> = {
-  active: 'bg-emerald-100 text-emerald-800',
-  damaged: 'bg-rose-100 text-rose-800',
-  repair: 'bg-amber-100 text-amber-800',
-  lost: 'bg-slate-100 text-slate-800',
-  moved: 'bg-blue-100 text-blue-800',
-  disposed: 'bg-gray-100 text-gray-800',
+  active: 'bg-success/10 text-success-hex',
+  damaged: 'bg-medical-gray/10 text-medical-gray',
+  repair: 'bg-warning/10 text-warning',
+  lost: 'bg-inactive/10 text-inactive',
+  moved: 'bg-trust-blue/10 text-trust-blue',
+  disposed: 'bg-inactive/10 text-inactive',
 };
 
 const statusLabels: Record<AssetStatus, string> = {
@@ -36,6 +37,9 @@ export default function AssetDetail() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [notification, setNotification] = useState<{isOpen: boolean, title: string, message: string, type: 'success' | 'error' | 'info'}>({
     isOpen: false, title: '', message: '', type: 'info'
+  });
+  const [confirmModal, setConfirmModal] = useState<{isOpen: boolean, title: string, message: string, onConfirm: () => void, type: 'danger' | 'warning' | 'info'}>({
+    isOpen: false, title: '', message: '', onConfirm: () => {}, type: 'warning'
   });
 
   const fetchData = () => {
@@ -85,20 +89,28 @@ export default function AssetDetail() {
     }
   };
 
-  const handleDelete = async () => {
-    if (confirm(`คุณแน่ใจหรือไม่ว่าต้องการลบ ${asset.name}?`)) {
-      try {
-        await deleteAsset(asset.id);
-        navigate('/assets');
-      } catch (e) {
-        setNotification({
-          isOpen: true,
-          title: 'ความผิดพลาด',
-          message: 'ไม่สามารถลบข้อมูลได้',
-          type: 'error'
-        });
+  const handleDelete = () => {
+    if (!asset) return;
+    
+    setConfirmModal({
+      isOpen: true,
+      title: 'ลบครุภัณฑ์',
+      message: `คุณแน่ใจหรือไม่ว่าต้องการลบ ${asset.name}? การกระทำนี้ไม่สามารถย้อนกลับได้`,
+      type: 'danger',
+      onConfirm: async () => {
+        try {
+          await deleteAsset(asset.id);
+          navigate('/assets');
+        } catch (e) {
+          setNotification({
+            isOpen: true,
+            title: 'ความผิดพลาด',
+            message: 'ไม่สามารถลบข้อมูลได้',
+            type: 'error'
+          });
+        }
       }
-    }
+    });
   };
 
   const handlePrintQR = () => {
@@ -107,7 +119,50 @@ export default function AssetDetail() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
-      <div className="flex items-center space-x-4 mb-4">
+      {/* Printable Area (Hidden on screen) */}
+      <div id="printable-sticker" className="hidden print:block print:bg-white print:p-0 print:m-0">
+        <div className="flex flex-col items-center justify-center min-h-[4cm] p-4 text-center">
+          <h3 className="text-[12px] font-bold text-slate-700 mb-4 font-sans uppercase tracking-wider">QR Code ประจำครุภัณฑ์</h3>
+          <div className="border border-slate-200 rounded-xl p-3 bg-white mb-4">
+            <QRCodeSVG 
+              value={asset.asset_code}
+              size={180}
+              level="H"
+              includeMargin={false}
+            />
+          </div>
+          <p className="font-mono text-[14px] font-bold text-slate-900">{asset.asset_code}</p>
+          <p className="text-[10px] text-slate-500 mt-0.5 leading-tight max-w-[180px]">{asset.name}</p>
+        </div>
+
+        <style>{`
+          @media print {
+            body * {
+              visibility: hidden;
+            }
+            #printable-sticker, #printable-sticker * {
+              visibility: visible;
+            }
+            #printable-sticker {
+              position: absolute;
+              left: 50%;
+              top: 0;
+              transform: translateX(-50%);
+              width: 5cm;
+              height: auto;
+            }
+            @page {
+              size: auto;
+              margin: 0;
+            }
+            header, nav, aside, footer, button {
+              display: none !important;
+            }
+          }
+        `}</style>
+      </div>
+
+      <div className="flex items-center space-x-4 mb-4 print:hidden">
         <Link to="/assets" className="text-slate-400 hover:text-slate-600 transition-colors">
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -119,14 +174,14 @@ export default function AssetDetail() {
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setIsEditModalOpen(true)}
-            className="p-2 text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+            className="p-2 text-trust-blue bg-trust-blue/5 rounded-lg hover:bg-trust-blue/10 transition-colors"
             title="แก้ไข"
           >
             <Edit className="w-5 h-5" />
           </button>
           <button
             onClick={handleDelete}
-            className="p-2 text-rose-600 bg-rose-50 rounded-lg hover:bg-rose-100 transition-colors"
+            className="p-2 text-primary bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
             title="ลบ"
           >
             <Trash2 className="w-5 h-5" />
@@ -179,12 +234,12 @@ export default function AssetDetail() {
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center">
               <h2 className="text-lg font-semibold text-slate-900 flex items-center">
-                <Activity className="w-5 h-5 rounded mr-2 text-indigo-500" />
+                <Activity className="w-5 h-5 rounded mr-2 text-primary" />
                 ประวัติการตรวจสอบ
               </h2>
               <Link 
                 to={`/scan?code=${asset.asset_code}`}
-                className="text-sm font-medium text-indigo-600 hover:text-indigo-700"
+                className="text-sm font-medium text-trust-blue hover:underline"
               >
                 + ตรวจสอบใหม่
               </Link>
@@ -198,7 +253,7 @@ export default function AssetDetail() {
                     <li key={insp.id} className="p-6 hover:bg-slate-50 transition-colors">
                       <div className="flex justify-between space-x-3">
                         <div>
-                          <div className="text-sm font-medium text-slate-900">{insp.note || "การตรวจสอบปกติ"}</div>
+                          <div className="text-sm font-medium text-slate-900">{insp.note || `ตรวจสอบแล้วพบว่า${statusLabels[insp.status]}`}</div>
                           <div className="text-sm text-slate-500 mt-1 flex items-center">
                             <span>โดย {insp.checked_by}</span>
                             <span className="mx-2">•</span>
@@ -257,6 +312,15 @@ export default function AssetDetail() {
         title={notification.title}
         message={notification.message}
         type={notification.type}
+      />
+
+      <ConfirmModal 
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal(prev => ({...prev, isOpen: false}))}
+        onConfirm={confirmModal.onConfirm}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        type={confirmModal.type}
       />
     </div>
   );
