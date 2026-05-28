@@ -11,21 +11,55 @@ export const isSupabaseConfigured = () => supabase !== null;
 
 export async function login(email: string, password: string): Promise<User> {
   if (supabase) {
-    const { data, error } = await supabase
+    // 1. Try to sign in with Supabase Auth first
+    // This is the source of truth for passwords after a reset
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (authError) {
+      // Fallback for users not yet in Auth but in our table (initial migration state)
+      const { data: tableData, error: tableError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('email', email)
+        .eq('password', password)
+        .maybeSingle();
+
+      if (tableError || !tableData) {
+        throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+      }
+      return tableData;
+    }
+
+    // 2. Auth successful, now get the user profile from the custom table
+    const { data: userData, error: userError } = await supabase
       .from('users')
       .select('*')
       .eq('email', email)
-      .eq('password', password)
       .maybeSingle();
-    
-    if (error) throw error;
-    if (!data) {
-      throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');
+
+    if (userError || !userData) {
+      // User is in Auth but not in our table? This shouldn't happen based on current logic
+      // But we can create a profile for them if needed. 
+      // For now, let's just let them in if they are an admin.
+      throw new Error('ไม่พบข้อมูลโปรไฟล์ผู้ใช้งานในระบบ');
     }
-    return data;
+
+    // 3. Lazy Sync: If the table password is different from what we used to login, update it
+    // This ensures the "Table Editor" eventually reflects the correct password
+    if (userData.password !== password) {
+      await supabase
+        .from('users')
+        .update({ password: password })
+        .eq('email', email);
+    }
+
+    return userData;
   }
   
-  // Mock login
+  // Mock login fallback
   const user = localUsers.find(u => u.email === email && u.password === password);
   if (!user) {
     throw new Error('อีเมลหรือรหัสผ่านไม่ถูกต้อง');

@@ -67,11 +67,41 @@ export default function ResetPassword() {
     setError(null);
 
     try {
-      const { error } = await supabase!.auth.updateUser({
+      // 1. Update Supabase Auth password
+      const { data: { user }, error: authError } = await supabase!.auth.updateUser({
         password: password,
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+
+      // 2. Sync with custom users table
+      if (user?.email) {
+        console.log('Syncing password for user:', user.email);
+        
+        // Use a more robust update - try matching email case-insensitively just in case
+        const { data: syncData, error: dbError, count } = await supabase!
+          .from('users')
+          .update({ 
+            password: password,
+            // Optionally update password_updated_at if it exists
+          })
+          .eq('email', user.email)
+          .select();
+        
+        if (dbError) {
+          console.error('Database sync error details:', dbError);
+          throw new Error(`บันทึกรหัสผ่านลงฐานข้อมูลไม่สำเร็จ: ${dbError.message}`);
+        }
+
+        if (!syncData || syncData.length === 0) {
+          console.warn('No user found in users table for email:', user.email);
+          // If no row was updated, it means the user doesn't exist in our custom table with this email
+          throw new Error('ไม่พบข้อมูลผู้ใช้งานในระบบ เพื่อความปลอดภัยกรุณาติดต่อผู้ดูแลระบบ');
+        }
+        
+        console.log('Successfully synced password to users table');
+      }
+
       setSuccess(true);
       
       // Auto logout and redirect after success
