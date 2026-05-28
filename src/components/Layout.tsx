@@ -76,6 +76,13 @@ export default function Layout({ children }: { children: ReactNode }) {
   const activeNotifications = notifications.filter(n => !dismissedIds.has(n.id));
   const unreadCount = activeNotifications.filter(n => !n.is_read).length;
 
+  const filteredNavigation = navigation.filter(item => {
+    if (user?.role === 'User') {
+      return item.href === '/assets' || item.href === '/scan';
+    }
+    return true;
+  });
+
   const userDisplayName = user?.name || user?.email?.split('@')[0] || 'ผู้ใช้งาน';
   const roleName = user?.role || 'สมาชิก';
 
@@ -105,7 +112,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
         <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
           <nav className="mt-2 flex-1 space-y-1 px-4">
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const isActive = location.pathname === item.href || (location.pathname.startsWith(item.href) && item.href !== '/');
               return (
                 <Link
@@ -153,7 +160,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
         <div className="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
           <nav className="mt-2 flex-1 space-y-1 px-4">
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const isActive = location.pathname === item.href || (location.pathname.startsWith(item.href) && item.href !== '/');
               return (
                 <Link

@@ -9,6 +9,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import AssetFormModal from '../components/AssetFormModal';
 import NotificationModal from '../components/NotificationModal';
 import ConfirmModal from '../components/ConfirmModal';
+import { useAuth } from '../contexts/AuthContext';
 
 const statusStyles: Record<AssetStatus, string> = {
   active: 'bg-success/10 text-success-hex',
@@ -42,6 +43,7 @@ export default function AssetDetail() {
     isOpen: false, title: '', message: '', onConfirm: () => {}, type: 'warning'
   });
 
+  const { user } = useAuth();
   const fetchData = () => {
     if (id) {
       setLoading(true);
@@ -49,6 +51,22 @@ export default function AssetDetail() {
         getAssetById(id),
         getInspections(id)
       ]).then(([assetData, inspectionsData]) => {
+        if (assetData) {
+          // Access control: User role can only see assets from their department
+          if (user?.role === 'User' && assetData.department_id !== user.department) {
+            setNotification({
+              isOpen: true,
+              title: 'เข้าถึงไม่ได้',
+              message: 'คุณไม่มีสิทธิ์ดูข้อมูลครุภัณฑ์ของแผนกอื่น',
+              type: 'error'
+            });
+            setTimeout(() => {
+              navigate('/assets');
+            }, 2000);
+            setLoading(false);
+            return;
+          }
+        }
         setAsset(assetData);
         setInspections(inspectionsData);
         setLoading(false);
@@ -125,7 +143,7 @@ export default function AssetDetail() {
           <h3 className="text-[12px] font-bold text-slate-700 mb-4 font-sans uppercase tracking-wider">QR Code ประจำครุภัณฑ์</h3>
           <div className="border border-slate-200 rounded-xl p-3 bg-white mb-4">
             <QRCodeSVG 
-              value={asset.asset_code}
+              value={`${window.location.origin}/assets/${asset.id}`}
               size={180}
               level="H"
               includeMargin={false}
@@ -172,20 +190,24 @@ export default function AssetDetail() {
         </div>
         <div className="flex-1" />
         <div className="flex items-center space-x-2">
-          <button
-            onClick={() => setIsEditModalOpen(true)}
-            className="p-2 text-trust-blue bg-trust-blue/5 rounded-lg hover:bg-trust-blue/10 transition-colors"
-            title="แก้ไข"
-          >
-            <Edit className="w-5 h-5" />
-          </button>
-          <button
-            onClick={handleDelete}
-            className="p-2 text-primary bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
-            title="ลบ"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
+          {user?.role !== 'User' && (
+            <>
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="p-2 text-trust-blue bg-trust-blue/5 rounded-lg hover:bg-trust-blue/10 transition-colors"
+                title="แก้ไข"
+              >
+                <Edit className="w-5 h-5" />
+              </button>
+              <button
+                onClick={handleDelete}
+                className="p-2 text-primary bg-primary/5 rounded-lg hover:bg-primary/10 transition-colors"
+                title="ลบ"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            </>
+          )}
           <span className={cn("inline-flex items-center rounded-full px-3 py-1 text-sm font-medium", statusStyles[asset.status])}>
             {statusLabels[asset.status]}
           </span>
@@ -278,7 +300,7 @@ export default function AssetDetail() {
             <h3 className="text-sm font-medium text-slate-500 mb-4 print:hidden">QR Code ประจำครุภัณฑ์</h3>
             <div className="inline-block p-4 bg-white border border-slate-200 rounded-xl mb-4 print:border-8 print:border-black">
               <QRCodeSVG 
-                value={asset.asset_code}
+                value={`${window.location.origin}/assets/${asset.id}`}
                 size={200}
                 level="H"
                 includeMargin={true}

@@ -8,6 +8,7 @@ import AssetFormModal from '../components/AssetFormModal';
 import NotificationModal from '../components/NotificationModal';
 import ConfirmModal from '../components/ConfirmModal';
 import * as XLSX from 'xlsx';
+import { useAuth } from '../contexts/AuthContext';
 
 const statusStyles: Record<AssetStatus, string> = {
   active: 'bg-success/10 text-success-hex',
@@ -40,6 +41,7 @@ export default function Assets() {
     isOpen: false, title: '', message: '', onConfirm: () => {}, type: 'warning'
   });
 
+  const { user } = useAuth();
   const fetchAssets = () => {
     setLoading(true);
     getAssets().then(data => {
@@ -74,6 +76,15 @@ export default function Assets() {
   };
 
   const handleDelete = (id: string, name: string) => {
+    if (user?.role === 'User') {
+      setNotification({
+        isOpen: true,
+        title: 'ไม่อนุญาต',
+        message: 'คุณไม่มีสิทธิ์ลบข้อมูลครุภัณฑ์',
+        type: 'error'
+      });
+      return;
+    }
     setConfirmModal({
       isOpen: true,
       title: 'ลบครุภัณฑ์',
@@ -194,10 +205,14 @@ export default function Assets() {
     reader.readAsBinaryString(file);
   };
 
-  const filtered = assets.filter(a => 
-    a.name.toLowerCase().includes(search.toLowerCase()) || 
-    a.asset_code.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = assets.filter(a => {
+    const matchesSearch = a.name.toLowerCase().includes(search.toLowerCase()) || 
+      a.asset_code.toLowerCase().includes(search.toLowerCase());
+    
+    const matchesRole = user?.role !== 'User' || a.department_id === user.department;
+    
+    return matchesSearch && matchesRole;
+  });
 
   return (
     <div className="space-y-6">
@@ -207,29 +222,33 @@ export default function Assets() {
           <p className="mt-1 text-sm text-slate-500">จัดการ ติดตาม และอัปเดตข้อมูลครุภัณฑ์ทั้งหมดในระบบ</p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 flex flex-wrap gap-3">
-          <input 
-            type="file" 
-            ref={fileInputRef} 
-            onChange={handleImportExcel} 
-            accept=".xlsx, .xls" 
-            className="hidden" 
-          />
-          <button
-            type="button"
-            onClick={handleDownloadTemplate}
-            className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            ดาวน์โหลดตัวอย่าง
-          </button>
-          <button
-            type="button"
-            onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
-          >
-            <Upload className="w-4 h-4 mr-2" />
-            นำเข้า Excel
-          </button>
+          {user?.role !== 'User' && (
+            <>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleImportExcel} 
+                accept=".xlsx, .xls" 
+                className="hidden" 
+              />
+              <button
+                type="button"
+                onClick={handleDownloadTemplate}
+                className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                ดาวน์โหลดตัวอย่าง
+              </button>
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                นำเข้า Excel
+              </button>
+            </>
+          )}
           <Link
             to="/scan"
             className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
@@ -237,14 +256,16 @@ export default function Assets() {
             <QrCode className="w-4 h-4 mr-2" />
             สแกน QR
           </Link>
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            เพิ่มครุภัณฑ์
-          </button>
+          {user?.role !== 'User' && (
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              เพิ่มครุภัณฑ์
+            </button>
+          )}
         </div>
       </div>
 
@@ -317,12 +338,14 @@ export default function Assets() {
                         <Link to={`/assets/${asset.id}`} className="text-trust-blue hover:underline px-2 py-1 bg-trust-blue/5 rounded-lg transition-colors">
                           รายละเอียด
                         </Link>
-                        <button 
-                          onClick={() => handleDelete(asset.id, asset.name)}
-                          className="text-rose-600 hover:text-rose-900 p-1 hover:bg-rose-50 rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
+                        {user?.role !== 'User' && (
+                          <button 
+                            onClick={() => handleDelete(asset.id, asset.name)}
+                            className="text-rose-600 hover:text-rose-900 p-1 hover:bg-rose-50 rounded-lg transition-colors"
+                          >
+                            <Trash2 className="w-5 h-5" />
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

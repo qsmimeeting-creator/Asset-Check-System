@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Package, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { login } from '../lib/api';
 
@@ -10,7 +10,10 @@ export default function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { signInManual } = useAuth();
+
+  const from = location.state?.from?.pathname || '/';
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -20,7 +23,7 @@ export default function Login() {
     try {
       const userData = await login(email, password);
       signInManual(userData);
-      navigate('/');
+      navigate(from, { replace: true });
     } catch (err: any) {
       setError(err.message || 'เกิดข้อผิดพลาดในการเข้าสู่ระบบ');
     } finally {

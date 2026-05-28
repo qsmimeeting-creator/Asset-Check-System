@@ -184,13 +184,19 @@ export async function updateAsset(id: string, updates: Partial<Asset>): Promise<
   return Promise.resolve(localAssets[index]);
 }
 
-export async function getDashboardStats(): Promise<DashboardStats> {
+export async function getDashboardStats(departmentId?: string): Promise<DashboardStats> {
   let allAssets: Asset[] = [];
   if (supabase) {
-    const { data } = await supabase.from('assets').select('*');
+    let query = supabase.from('assets').select('*');
+    if (departmentId) {
+      query = query.eq('department_id', departmentId);
+    }
+    const { data } = await query;
     allAssets = data || [];
   } else {
-    allAssets = localAssets;
+    allAssets = departmentId 
+      ? localAssets.filter(a => a.department_id === departmentId)
+      : localAssets;
   }
 
   // Get assets with upcoming maintenance (next 30 days)

@@ -6,6 +6,7 @@ import { formatCurrency, cn, formatThaiDate } from '../lib/utils';
 import * as XLSX from 'xlsx';
 import { Asset, Department } from '../types';
 import { motion, AnimatePresence } from 'motion/react';
+import { useAuth } from '../contexts/AuthContext';
 
 const statusLabels: Record<string, { label: string; color: string }> = {
   active: { label: 'ใช้งานปกติ', color: 'bg-success/10 text-success-hex' },
@@ -17,6 +18,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export default function Reports() {
+  const { user } = useAuth();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [filteredAssets, setFilteredAssets] = useState<Asset[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -39,7 +41,7 @@ export default function Reports() {
 
   useEffect(() => {
     applyFilters();
-  }, [assets, search, statusFilter, deptFilter, startDate, endDate]);
+  }, [assets, search, statusFilter, deptFilter, startDate, endDate, user]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -60,6 +62,11 @@ export default function Reports() {
   const applyFilters = () => {
     let result = [...assets];
 
+    // Role-based filtering
+    if (user?.role === 'User') {
+      result = result.filter(a => a.department_id === user.department);
+    }
+
     if (search) {
       result = result.filter(a => 
         a.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -72,7 +79,7 @@ export default function Reports() {
       result = result.filter(a => a.status === statusFilter);
     }
 
-    if (deptFilter !== 'all') {
+    if (deptFilter !== 'all' && user?.role !== 'User') {
       result = result.filter(a => a.department_id === deptFilter);
     }
 
@@ -196,19 +203,21 @@ export default function Reports() {
                   ))}
                 </select>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">แผนก</label>
-                <select
-                  className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:ring-2 focus:ring-primary outline-none transition-all appearance-none"
-                  value={deptFilter}
-                  onChange={(e) => setDeptFilter(e.target.value)}
-                >
-                  <option value="all">ทั้งหมด</option>
-                  {departments.map(d => (
-                    <option key={d.id} value={d.id}>{d.name}</option>
-                  ))}
-                </select>
-              </div>
+              {user?.role !== 'User' && (
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">แผนก</label>
+                  <select
+                    className="w-full px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-sm focus:bg-white focus:ring-2 focus:ring-primary outline-none transition-all appearance-none"
+                    value={deptFilter}
+                    onChange={(e) => setDeptFilter(e.target.value)}
+                  >
+                    <option value="all">ทั้งหมด</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.id}>{d.name}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
               <div className="space-y-1.5">
                 <label className="text-[11px] font-bold text-slate-400 uppercase tracking-wider ml-1">ช่วงวันที่ซื้อ</label>
                 <div className="flex items-center gap-2">

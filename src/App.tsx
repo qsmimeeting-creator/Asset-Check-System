@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Assets from './pages/Assets';
@@ -16,6 +16,7 @@ import { isSupabaseConfigured } from './lib/api';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
   const dbConfigured = isSupabaseConfigured();
 
   // If DB is not configured, we allow access to mock mode
@@ -30,7 +31,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   return <>{children}</>;
@@ -49,6 +50,14 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function Home() {
+  const { user } = useAuth();
+  if (user?.role === 'User') {
+    return <Navigate to="/assets" replace />;
+  }
+  return <Dashboard />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -63,11 +72,21 @@ export default function App() {
               <ProtectedRoute>
                 <Layout>
                   <Routes>
-                    <Route path="/" element={<Dashboard />} />
+                    <Route 
+                      path="/" 
+                      element={<Home />} 
+                    />
                     <Route path="/assets" element={<Assets />} />
                     <Route path="/assets/:id" element={<AssetDetail />} />
                     <Route path="/scan" element={<ScanQR />} />
-                    <Route path="/reports" element={<Reports />} />
+                    <Route 
+                      path="/reports" 
+                      element={
+                        <AdminRoute>
+                          <Reports /> 
+                        </AdminRoute>
+                      } 
+                    />
                     <Route 
                       path="/users" 
                       element={

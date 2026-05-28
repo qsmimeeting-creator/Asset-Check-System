@@ -4,6 +4,7 @@ import { DashboardStats } from '../types';
 import { Package, AlertCircle, Wrench, CheckCircle, PieChart as PieChartIcon } from 'lucide-react';
 import { cn, formatThaiDate } from '../lib/utils';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { useAuth } from '../contexts/AuthContext';
 
 const COLORS = {
   active: '#198754', // success
@@ -16,13 +17,15 @@ const COLORS = {
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
-    getDashboardStats().then(data => {
+    const deptId = user?.role === 'User' ? user.department : undefined;
+    getDashboardStats(deptId).then(data => {
       setStats(data);
       setLoading(false);
     });
-  }, []);
+  }, [user]);
 
   if (loading || !stats) {
     return <div className="animate-pulse flex space-x-4">กำลังโหลดข้อมูลภาพรวม...</div>;

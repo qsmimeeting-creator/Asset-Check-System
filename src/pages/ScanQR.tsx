@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { getAssetByCode, addInspection } from '../lib/api';
+import { getAssetByCode, getAssetById, addInspection } from '../lib/api';
 import { Asset, AssetStatus } from '../types';
 import { QrCode, AlertCircle, Camera, Check } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { useAuth } from '../contexts/AuthContext';
 
 type FormData = {
   status: AssetStatus;
@@ -22,6 +23,7 @@ export default function ScanQR() {
   const searchParams = new URLSearchParams(location.search);
   const prefillCode = searchParams.get('code');
 
+  const { user } = useAuth();
   const { register, handleSubmit, reset } = useForm<FormData>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -84,12 +86,46 @@ export default function ScanQR() {
       }
       scannerRef.current = null;
     }
+
+    // Handle full URLs pointing to an asset
+    let codeOrId = decodedText;
+    if (decodedText.includes('/assets/')) {
+      const parts = decodedText.split('/assets/');
+      codeOrId = parts[parts.length - 1];
+      
+      // If it's a direct ID link and we are just scanning to view, go there
+      if (!prefillCode) {
+        navigate(`/assets/${codeOrId}`);
+        return;
+      }
+    }
+
     setScanResult(decodedText);
     setError('');
 
     try {
-      const foundAsset = await getAssetByCode(decodedText);
+      // First try by ID (if it looks like a URL-extracted part)
+      let foundAsset = null;
+      if (decodedText.includes('/assets/')) {
+        foundAsset = await getAssetById(codeOrId);
+      }
+      
+      // If not found by ID or not a URL, try by code
+      if (!foundAsset) {
+        foundAsset = await getAssetByCode(codeOrId);
+      }
+
       if (foundAsset) {
+        // Access control: User role can only see assets from their department
+        if (user?.role === 'User' && foundAsset.department_id !== user.department) {
+          setError('คุณไม่มีสิทธิ์เข้าถึงข้อมูลครุภัณฑ์ของแผนกอื่น');
+          return;
+        }
+
+        if (!prefillCode) {
+          navigate(`/assets/${foundAsset.id}`);
+          return;
+        }
         setAsset(foundAsset);
         reset({
           status: foundAsset.status,
@@ -97,7 +133,7 @@ export default function ScanQR() {
           note: ''
         });
       } else {
-        setError(`ไม่พบครุภัณฑ์ที่ตรงกับรหัส: ${decodedText}`);
+        setError(`ไม่พบครุภัณฑ์ที่ตรงกับรหัส: ${codeOrId}`);
       }
     } catch (err: any) {
       setError(err.message || 'เกิดข้อผิดพลาดในการดึงข้อมูลครุภัณฑ์');
@@ -105,12 +141,12 @@ export default function ScanQR() {
   };
 
   const onSubmit = async (data: FormData) => {
-    if (!asset) return;
+    if (!asset || !user) return;
     setIsSubmitting(true);
     try {
       await addInspection({
         asset_id: asset.id,
-        checked_by: "ผู้ดูแลระบบ", // In real app, from auth state
+        checked_by: user.name,
         checked_at: new Date().toISOString(),
         status: data.status,
         location_id: data.location_id,
