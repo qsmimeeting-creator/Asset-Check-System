@@ -36,9 +36,11 @@ export default function ForgotPassword() {
         return;
       }
 
-      // 2. หากพบ จึงส่งคำสั่ง reset ไปยัง Supabase Auth
+      // หากพบ จึงส่งคำสั่ง reset ไปยัง Supabase Auth
+      const resetUrl = new URL('/reset-password', window.location.origin).href;
+      
       const { error } = await supabase!.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: resetUrl,
       });
 
       if (error) throw error;
@@ -120,6 +122,7 @@ export default function ForgotPassword() {
               <p className="text-slate-500 mb-8">
                 เราได้ส่งลิงก์สำหรับรีเซ็ตรหัสผ่านไปที่ <span className="font-bold text-slate-900">{email}</span> แล้ว กรุณาตรวจสอบกล่องจดหมายของคุณ
               </p>
+
               <button
                 onClick={() => navigate('/login')}
                 className="w-full py-3 px-4 rounded-xl text-sm font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 transition-all active:scale-[0.98]"

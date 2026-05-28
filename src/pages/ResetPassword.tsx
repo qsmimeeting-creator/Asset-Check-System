@@ -15,13 +15,34 @@ export default function ResetPassword() {
     // Check if we have a session (user clicked the reset link)
     const checkSession = async () => {
       if (!supabase) return;
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        // If no session and no hash in URL, it might be an invalid or expired link
-        // But some flows set the session automatically on redirect
+      
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('Session error:', sessionError);
+        setError('เกิดข้อผิดพลาดในการตรวจสอบสิทธิ์ กรุณาลองใหม่อีกครั้ง');
+        return;
+      }
+
+      // If we are at /reset-password but no session is detected,
+      // and we have a hash in the URL, Supabase might be still processing it.
+      if (!session && !window.location.hash) {
+        setError('ลิงก์รีเซ็ตรหัสผ่านไม่ถูกต้องหรือหมดอายุ');
       }
     };
+    
     checkSession();
+
+    // Also listen for auth changes to catch the session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' || event === 'PASSWORD_RECOVERY') {
+        console.log('Auth event in ResetPassword:', event);
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleResetPassword = async (e: React.FormEvent) => {
