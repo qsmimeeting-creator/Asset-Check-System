@@ -139,29 +139,29 @@ export default function Reports() {
           <h1 className="text-2xl font-display font-bold text-slate-900 tracking-tight">ระบบออกรายงาน</h1>
           <p className="mt-1 text-sm text-slate-500">ตรวจสอบและออกรายงานข้อมูลครุภัณฑ์</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto mt-4 md:mt-0">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition-all border ${
+            className={`flex-1 sm:flex-none inline-flex items-center justify-center rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all border ${
               showFilters ? 'bg-primary/5 border-primary/20 text-primary' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
             }`}
           >
-            <Filter className="w-4 h-4 mr-2" />
-            ตัวกรองข้อมูล
+            <Filter className="w-4 h-4 mr-1 sm:mr-2" />
+            ตัวกรอง
           </button>
           <button
             onClick={exportToExcel}
             disabled={isGenerating}
-            className="inline-flex items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-all"
+            className="flex-1 sm:flex-none inline-flex items-center justify-center rounded-xl bg-emerald-50 border border-emerald-200 px-4 py-2 text-xs sm:text-sm font-semibold text-emerald-700 hover:bg-emerald-100 transition-all"
           >
-            <FileSpreadsheet className="w-4 h-4 mr-2" />
-            ส่งออก (Excel)
+            <FileSpreadsheet className="w-4 h-4 mr-1 sm:mr-2" />
+            ส่งออก Excel
           </button>
           <button
             onClick={handlePrint}
-            className="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-all"
+            className="w-full sm:w-auto mx-auto inline-flex items-center justify-center rounded-xl bg-primary px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-all mt-2 sm:mt-0"
           >
-            <Printer className="w-4 h-4 mr-2" />
+            <Printer className="w-4 h-4 mr-1 sm:mr-2" />
             พิมพ์รายงาน
           </button>
         </div>

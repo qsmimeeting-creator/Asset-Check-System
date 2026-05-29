@@ -25,7 +25,20 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem(`dismissedNotificationIds_${user?.email || 'guest'}`);
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
+  useEffect(() => {
+    if (user?.email) {
+      localStorage.setItem(`dismissedNotificationIds_${user.email}`, JSON.stringify(Array.from(dismissedIds)));
+    }
+  }, [dismissedIds, user?.email]);
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
@@ -70,7 +83,11 @@ export default function Layout({ children }: { children: ReactNode }) {
   };
 
   const handleClearAll = () => {
-    setDismissedIds(new Set(notifications.map(n => n.id)));
+    setDismissedIds(prev => {
+      const newSet = new Set(prev);
+      notifications.forEach(n => newSet.add(n.id));
+      return newSet;
+    });
   };
 
   const activeNotifications = notifications.filter(n => !dismissedIds.has(n.id));
@@ -212,7 +229,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       </div>
 
       {/* Main Column */}
-      <div className="flex flex-1 flex-col md:pl-64">
+      <div className="flex flex-1 flex-col md:pl-64 min-w-0">
         <header className="sticky top-0 z-10 flex h-16 flex-shrink-0 bg-white shadow-sm border-b border-slate-200">
           <div className="flex flex-1 items-center justify-between px-4 sm:px-6 md:px-8">
             <div className="flex items-center md:hidden">
@@ -286,9 +303,9 @@ export default function Layout({ children }: { children: ReactNode }) {
                       )}
                     </div>
                     <div className="max-h-[400px] overflow-y-auto">
-                      <AnimatePresence initial={false}>
-                        {activeNotifications.length > 0 ? (
-                          <div className="divide-y divide-slate-100">
+                      {activeNotifications.length > 0 ? (
+                        <div className="divide-y divide-slate-100">
+                          <AnimatePresence initial={false}>
                             {activeNotifications.map((n) => (
                               <motion.div
                                 key={n.id}
@@ -344,8 +361,8 @@ export default function Layout({ children }: { children: ReactNode }) {
                                       )}
                                       <button
                                         onClick={(e) => handleDismissNotification(n.id, e)}
-                                        className="p-1 text-slate-300 hover:text-slate-600 opacity-0 group-hover:opacity-100 transition-all rounded"
-                                        title="ปัดทิ้ง"
+                                        className="p-1 text-slate-300 hover:text-slate-600 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all rounded"
+                                        title="ซ่อนการแจ้งเตือน"
                                       >
                                         <X className="w-3.5 h-3.5" />
                                       </button>
@@ -354,18 +371,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                                 </Link>
                               </motion.div>
                             ))}
-                          </div>
-                        ) : (
-                          <motion.div 
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="py-12 text-center"
-                          >
-                            <Bell className="w-10 h-10 text-slate-300 mx-auto mb-3 opacity-50" />
-                            <p className="text-sm text-slate-400 font-medium">ไม่มีการแจ้งเตือนใหม่</p>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
+                          </AnimatePresence>
+                        </div>
+                      ) : (
+                        <div className="py-12 text-center">
+                          <Bell className="w-10 h-10 text-slate-300 mx-auto mb-3 opacity-50" />
+                          <p className="text-sm text-slate-400 font-medium">ไม่มีการแจ้งเตือนใหม่</p>
+                        </div>
+                      )}
                     </div>
                     <div className="p-3 border-t border-slate-100 bg-slate-50/50">
                       <button className="w-full py-2 text-xs font-bold text-slate-500 hover:text-primary transition-colors text-center uppercase tracking-widest">
@@ -379,8 +392,8 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
         </header>
 
-        <main className="flex-1">
-          <div className="py-6 px-4 sm:px-6 md:px-8">
+        <main className="flex-1 min-w-0">
+          <div className="py-6 px-4 sm:px-6 md:px-8 w-full">
             {children}
           </div>
         </main>

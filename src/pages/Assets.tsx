@@ -221,7 +221,7 @@ export default function Assets() {
           <h1 className="text-2xl font-display font-bold text-slate-900 tracking-tight">คลังครุภัณฑ์</h1>
           <p className="mt-1 text-sm text-slate-500">จัดการ ติดตาม และอัปเดตข้อมูลครุภัณฑ์ทั้งหมดในระบบ</p>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 flex flex-wrap gap-3">
+        <div className="mt-4 sm:mt-0 sm:ml-16 grid grid-cols-2 lg:flex lg:flex-wrap gap-2 sm:gap-3 w-full sm:w-auto">
           {user?.role !== 'User' && (
             <>
               <input 
@@ -234,35 +234,36 @@ export default function Assets() {
               <button
                 type="button"
                 onClick={handleDownloadTemplate}
-                className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
+                className="inline-flex items-center justify-center rounded-lg bg-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors w-full lg:w-auto"
               >
-                <Download className="w-4 h-4 mr-2" />
-                ดาวน์โหลดตัวอย่าง
+                <Download className="w-4 h-4 sm:mr-2" />
+                <span className="hidden sm:inline">ดาวน์โหลดตัวอย่าง</span>
+                <span className="sm:hidden ml-1">โหลดตัวอย่าง</span>
               </button>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
+                className="inline-flex items-center justify-center rounded-lg bg-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors w-full lg:w-auto"
               >
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload className="w-4 h-4 mr-1 sm:mr-2" />
                 นำเข้า Excel
               </button>
             </>
           )}
           <Link
             to="/scan"
-            className="inline-flex items-center justify-center rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors"
+            className="inline-flex items-center justify-center rounded-lg bg-white px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-300 hover:bg-slate-50 transition-colors w-full lg:w-auto"
           >
-            <QrCode className="w-4 h-4 mr-2" />
+            <QrCode className="w-4 h-4 mr-1 sm:mr-2" />
             สแกน QR
           </Link>
           {user?.role !== 'User' && (
             <button
               type="button"
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              className="inline-flex items-center justify-center rounded-lg bg-primary px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary w-full lg:w-auto"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus className="w-4 h-4 mr-1 sm:mr-2" />
               เพิ่มครุภัณฑ์
             </button>
           )}

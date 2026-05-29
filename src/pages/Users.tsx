@@ -165,14 +165,14 @@ export default function Users() {
           <h1 className="text-2xl font-display font-bold text-slate-900 tracking-tight">การจัดการผู้ใช้งาน</h1>
           <p className="mt-1 text-sm text-slate-500">กำหนดสิทธิ์และการเข้าถึงระบบสำหรับบุคลากร</p>
         </div>
-        <div className="mt-4 sm:mt-0">
+        <div className="mt-4 sm:mt-0 w-full sm:w-auto">
           <button
             onClick={() => {
               setEditingUser(null);
               reset();
               setShowAddModal(true);
             }}
-            className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors"
+            className="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-hover transition-colors"
           >
             <UserPlus className="w-4 h-4 mr-2" />
             เพิ่มผู้ใช้งาน
