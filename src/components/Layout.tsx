@@ -25,20 +25,30 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDbConnected, setIsDbConnected] = useState(false);
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem(`dismissedNotificationIds_${user?.email || 'guest'}`);
-      return saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(new Set());
+  const [isHydrated, setIsHydrated] = useState(false);
 
+  // Load dismissed notifications when user becomes available
   useEffect(() => {
     if (user?.email) {
+      try {
+        const saved = localStorage.getItem(`dismissedNotificationIds_${user.email}`);
+        if (saved) {
+          setDismissedIds(new Set(JSON.parse(saved)));
+        }
+      } catch {
+        // ignore
+      }
+      setIsHydrated(true);
+    }
+  }, [user?.email]);
+
+  // Save dismissed notifications
+  useEffect(() => {
+    if (user?.email && isHydrated) {
       localStorage.setItem(`dismissedNotificationIds_${user.email}`, JSON.stringify(Array.from(dismissedIds)));
     }
-  }, [dismissedIds, user?.email]);
+  }, [dismissedIds, user?.email, isHydrated]);
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
 
